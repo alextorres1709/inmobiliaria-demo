@@ -5,21 +5,21 @@
 
 /* ─── CSS Variables ─────────────────────────────── */
 :root {
-    --brand-primary: #4F46E5;
-    --brand-primary-light: #6366F1;
-    --brand-primary-dark: #4338CA;
-    --brand-cyan: #0891B2;
-    --brand-purple: #7C3AED;
-    --brand-amber: #D97706;
-    --bg-primary: #f4f6f8;
-    --bg-secondary: #ebeef2;
-    --bg-tertiary: #dde1e7;
-    --bg-card: #fafbfc;
-    --bg-card-hover: #f4f6f8;
-    --bg-glass: #fafbfc;
-    --border-color: #e0e4ea;
-    --border-hover: #c8cdd5;
-    --border-focus: rgba(79, 70, 229, 0.5);
+    --brand-primary: #1a3a5c;
+    --brand-primary-light: #245980;
+    --brand-primary-dark: #122a42;
+    --brand-cyan: #0e7490;
+    --brand-purple: #1e4d6e;
+    --brand-amber: #b8860b;
+    --bg-primary: #f0f4f7;
+    --bg-secondary: #e4eaef;
+    --bg-tertiary: #d5dde4;
+    --bg-card: #f8fafb;
+    --bg-card-hover: #f0f4f7;
+    --bg-glass: #f8fafb;
+    --border-color: #d0d8e0;
+    --border-hover: #b8c4cf;
+    --border-focus: rgba(26, 58, 92, 0.5);
     --text-primary: #0f172a;
     --text-secondary: #64748b;
     --text-tertiary: #94a3b8;
@@ -1655,47 +1655,47 @@ select.form-input {
    DARK THEME — Professional Dark Mode
    ═══════════════════════════════════════════════════ */
 [data-theme="dark"] {
-    --brand-primary: #6366f1;
-    --brand-primary-light: #818cf8;
-    --brand-primary-dark: #4f46e5;
-    --brand-cyan: #06b6d4;
-    --brand-purple: #a855f7;
-    --brand-amber: #f59e0b;
-    --bg-primary: #0a0a12;
-    --bg-secondary: #12121c;
-    --bg-tertiary: #1a1a28;
-    --bg-card: #0f0f18;
-    --bg-card-hover: #14141f;
-    --bg-glass: rgba(15, 15, 24, 0.85);
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-hover: rgba(255, 255, 255, 0.12);
-    --border-focus: rgba(99, 102, 241, 0.5);
-    --text-primary: #f1f5f9;
-    --text-secondary: rgba(255, 255, 255, 0.55);
-    --text-tertiary: rgba(255, 255, 255, 0.3);
-    --danger: #ef4444;
-    --danger-glow: rgba(239, 68, 68, 0.15);
-    --warning: #f59e0b;
-    --success: #10b981;
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6);
+    --brand-primary: #2dd4bf;
+    --brand-primary-light: #5eead4;
+    --brand-primary-dark: #14b8a6;
+    --brand-cyan: #22d3ee;
+    --brand-purple: #38bdf8;
+    --brand-amber: #fbbf24;
+    --bg-primary: #0d1b2a;
+    --bg-secondary: #132334;
+    --bg-tertiary: #1a2d40;
+    --bg-card: #0f1e2e;
+    --bg-card-hover: #152838;
+    --bg-glass: rgba(13, 27, 42, 0.92);
+    --border-color: rgba(255, 255, 255, 0.07);
+    --border-hover: rgba(255, 255, 255, 0.13);
+    --border-focus: rgba(45, 212, 191, 0.5);
+    --text-primary: #e2e8f0;
+    --text-secondary: rgba(226, 232, 240, 0.6);
+    --text-tertiary: rgba(226, 232, 240, 0.35);
+    --danger: #f87171;
+    --danger-glow: rgba(248, 113, 113, 0.15);
+    --warning: #fbbf24;
+    --success: #34d399;
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.7);
 }
 
 [data-theme="dark"] .header {
-    background: rgba(15, 15, 24, 0.92);
+    background: rgba(13, 27, 42, 0.92);
 }
 
 [data-theme="dark"] .sidebar-logo .logo-icon {
-    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 2px 12px rgba(45, 212, 191, 0.3);
 }
 
 [data-theme="dark"] .btn-primary {
-    box-shadow: 0 1px 3px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 1px 3px rgba(45, 212, 191, 0.3);
 }
 
 [data-theme="dark"] .btn-primary:hover {
-    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 2px 10px rgba(45, 212, 191, 0.4);
 }
 
 [data-theme="dark"] .kpi-card {
@@ -1707,25 +1707,25 @@ select.form-input {
 }
 
 [data-theme="dark"] .login-logo .logo-icon {
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 20px rgba(45, 212, 191, 0.3);
 }
 
 [data-theme="dark"] .nav-link.active {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(45, 212, 191, 0.1);
 }
 
 [data-theme="dark"] tbody tr:hover {
-    background: rgba(99, 102, 241, 0.04);
+    background: rgba(45, 212, 191, 0.04);
 }
 
 [data-theme="dark"] .search-input input:focus,
 [data-theme="dark"] .form-input:focus {
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12);
 }
 
 [data-theme="dark"] .chat-bubble.chat-user {
-    background: rgba(99, 102, 241, 0.08);
-    border-color: rgba(99, 102, 241, 0.15);
+    background: rgba(45, 212, 191, 0.08);
+    border-color: rgba(45, 212, 191, 0.15);
 }
 
 [data-theme="dark"] .property-card:hover {
