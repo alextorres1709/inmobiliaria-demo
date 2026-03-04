@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Resumen general de tu inmobiliaria</p>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+    <div class="kpi-card kpi-accent-blue animate-in">
+        <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+        </div>
+        <div class="kpi-label">Propiedades Activas</div>
+        <div class="kpi-value">{{ active_properties }}</div>
+        <div class="kpi-subtitle">{{ sale_count }} venta · {{ rent_count }} alquiler</div>
+    </div>
+
+    <div class="kpi-card kpi-accent-green animate-in">
+        <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        </div>
+        <div class="kpi-label">Clientes</div>
+        <div class="kpi-value">{{ total_clients }}</div>
+        <div class="kpi-subtitle">+{{ new_clients_month }} este mes</div>
+    </div>
+
+    <div class="kpi-card kpi-accent-cyan animate-in">
+        <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 2v4M16 2v4" />
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M3 10h18" />
+            </svg>
+        </div>
+        <div class="kpi-label">Citas Hoy</div>
+        <div class="kpi-value">{{ today_appointments }}</div>
+        <div class="kpi-subtitle">{{ week_appointments }} esta semana · {{ pending_appointments }} pendientes</div>
+    </div>
+
+    <div class="kpi-card kpi-accent-purple animate-in">
+        <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+        </div>
+        <div class="kpi-label">Consultas Bot</div>
+        <div class="kpi-value">{{ messages_total }}</div>
+        <div class="kpi-subtitle">+{{ messages_today }} hoy</div>
+    </div>
+</div>
+
+<!-- Charts Row 1: Daily line + Appointment doughnut (small) -->
+<div class="grid-3">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>
+                Consultas diarias (30 días)
+            </h3>
+        </div>
+        <canvas id="dailyChart" height="180"></canvas>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 2v4M16 2v4" />
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M3 10h18" />
+                </svg>
+                Estado de Citas
+            </h3>
+        </div>
+        <div
+            style="display:flex;align-items:center;justify-content:center;padding:10px 20px;max-width:220px;margin:0 auto">
+            <canvas id="appointmentChart" height="180"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2: Client sources (horizontal bar) + Property zones (bar) -->
+<div class="grid-2" style="margin-top:20px">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                Origen de Clientes
+            </h3>
+        </div>
+        <canvas id="sourcesChart" height="160"></canvas>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                Promociones por Zona
+            </h3>
+        </div>
+        <canvas id="citiesChart" height="160"></canvas>
+    </div>
+</div>
+
+<!-- Upcoming appointments -->
+<div class="card" style="margin-top:20px">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 2v4M16 2v4" />
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M3 10h18" />
+            </svg>
+            Próximas Citas
+        </h3>
+        <a href="{{ url_for('appointments.index') }}" class="btn btn-secondary" style="font-size:12px">Ver todas</a>
+    </div>
+    {% if upcoming_appointments %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Propiedad</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appt in upcoming_appointments %}
+                <tr>
+                    <td>{{ appt.client.name if appt.client else '—' }}</td>
+                    <td>{{ appt.property.title[:30] if appt.property else 'Sin propiedad' }}{% if appt.property and
+                        appt.property.title|length > 30 %}...{% endif %}</td>
+                    <td>{{ appt.date.strftime('%d/%m/%Y %H:%M') if appt.date else '—' }}</td>
+                    <td>
+                        {% if appt.status == 'pending' %}
+                        <span class="badge badge-warning">Pendiente</span>
+                        {% elif appt.status == 'confirmed' %}
+                        <span class="badge badge-success">Confirmada</span>
+                        {% elif appt.status == 'completed' %}
+                        <span class="badge badge-info">Completada</span>
+                        {% else %}
+                        <span class="badge badge-danger">Cancelada</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 2v4M16 2v4" />
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M3 10h18" />
+        </svg>
+        <h3>Sin citas programadas</h3>
+        <p>Las próximas citas aparecerán aquí</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var _dCharts = [];
+    function buildDashboardCharts() {
+        _dCharts.forEach(function (c) { c.destroy(); });
+        _dCharts = [];
+        var t = getChartTheme();
+
+        Chart.defaults.color = t.text;
+        Chart.defaults.borderColor = t.grid;
+
+        // ── Daily consultas (line area with gradient) ──
+        var dailyData = {{ daily_messages| tojson
+    }};
+    var dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    var gradient = dailyCtx.createLinearGradient(0, 0, 0, 180);
+    gradient.addColorStop(0, t.primaryA(0.3));
+    gradient.addColorStop(1, t.primaryA(0.02));
+
+    _dCharts.push(new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyData.map(function (d) { return d.date; }),
+            datasets: [{
+                label: 'Consultas',
+                data: dailyData.map(function (d) { return d.count; }),
+                borderColor: t.primary,
+                backgroundColor: gradient,
+                fill: true, tension: 0.4, pointRadius: 2, pointBackgroundColor: t.primary,
+                borderWidth: 2.5,
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: { duration: 1200, easing: 'easeInOutQuart' },
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: t.grid }, ticks: { color: t.text } },
+                x: { grid: { display: false }, ticks: { color: t.text, maxTicksLimit: 10 } }
+            }
+        }
+    }));
+
+    // ── Appointment Status (small doughnut) ──
+    var apptData = {{ appointment_statuses| tojson }};
+    var apptLabels = [];
+    var apptValues = [];
+    var statusTranslations = { 'confirmed': 'Confirmadas', 'pending': 'Pendientes', 'completed': 'Completadas', 'cancelled': 'Canceladas' };
+    var statusColors = ['#22d3ee', '#f59e0b', '#34d399', '#ef4444'];
+    var statusOrder = ['confirmed', 'pending', 'completed', 'cancelled'];
+    statusOrder.forEach(function (s) {
+        if (apptData[s]) {
+            apptLabels.push(statusTranslations[s] || s);
+            apptValues.push(apptData[s]);
+        }
+    });
+
+    _dCharts.push(new Chart(document.getElementById('appointmentChart'), {
+        type: 'doughnut',
+        data: {
+            labels: apptLabels,
+            datasets: [{
+                data: apptValues,
+                backgroundColor: statusColors.slice(0, apptValues.length),
+                borderWidth: 0,
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '62%',
+            animation: { animateRotate: true, duration: 1000 },
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', color: t.text, font: { size: 11 } } },
+                tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
+            }
+        }
+    }));
+
+    // ── Client Sources (horizontal bar chart) ──
+    var srcData = {{ client_sources| tojson }};
+    var srcLabels = Object.keys(srcData);
+    var srcValues = Object.values(srcData);
+    var srcColors = ['#818cf8', '#22d3ee', '#f59e0b', '#34d399', '#ec4899', '#a78bfa', '#64748b'];
+
+    _dCharts.push(new Chart(document.getElementById('sourcesChart'), {
+        type: 'bar',
+        data: {
+            labels: srcLabels,
+            datasets: [{
+                label: 'Clientes',
+                data: srcValues,
+                backgroundColor: srcColors.slice(0, srcValues.length),
+                borderRadius: 6,
+                borderSkipped: false,
+                barThickness: 22,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            animation: { duration: 1000, easing: 'easeOutQuart' },
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: t.grid }, ticks: { color: t.text, stepSize: 1 } },
+                y: { grid: { display: false }, ticks: { color: t.text, font: { size: 12, weight: '600' } } }
+            }
+        }
+    }));
+
+    // ── Property Cities (vertical bar chart) ──
+    var cityData = {{ property_cities| tojson }};
+    var cityLabels = Object.keys(cityData);
+    var cityValues = Object.values(cityData);
+    var cityColors = ['#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#a78bfa', '#ec4899', '#34d399', '#64748b'];
+
+    _dCharts.push(new Chart(document.getElementById('citiesChart'), {
+        type: 'bar',
+        data: {
+            labels: cityLabels,
+            datasets: [{
+                label: 'Promociones',
+                data: cityValues,
+                backgroundColor: cityColors.slice(0, cityValues.length),
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 40,
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: { duration: 1000, easing: 'easeOutQuart' },
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: t.grid }, ticks: { color: t.text, stepSize: 1 } },
+                x: { grid: { display: false }, ticks: { color: t.text, font: { size: 11 } } }
+            }
+        }
+    }));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var waitChart = setInterval(function () {
+            if (typeof Chart !== 'undefined') {
+                clearInterval(waitChart);
+                buildDashboardCharts();
+            }
+        }, 50);
+    });
+    window.addEventListener('themechange', buildDashboardCharts);
+</script>
+{% endblock %}

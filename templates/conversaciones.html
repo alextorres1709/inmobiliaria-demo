@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Conversaciones{% endblock %}
+{% block header_title %}Conversaciones{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Conversaciones</h1>
+        <p class="page-subtitle">Historial de todos los usuarios que han interactuado con el bot</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:20px">
+    <form method="GET" style="display:flex;gap:10px;align-items:end">
+        <div class="form-group" style="flex:1;margin:0">
+            <input type="text" name="search" class="form-input" placeholder="Buscar por ID de usuario o contenido..." value="{{ search }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{{ users|length }} usuarios</h3>
+    </div>
+    {% if users %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Mensajes</th>
+                    <th>Primera vez</th>
+                    <th>Última actividad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><strong>{{ u.user_id[-8:] }}</strong></td>
+                    <td>{{ u.msg_count }}</td>
+                    <td>{{ u.first_seen.strftime('%d/%m/%Y') if u.first_seen else '—' }}</td>
+                    <td>{{ u.last_active.strftime('%d/%m/%Y %H:%M') if u.last_active else '—' }}</td>
+                    <td>
+                        <a href="{{ url_for('conversations.detail', user_id=u.user_id) }}" class="btn btn-secondary" style="font-size:11px;padding:4px 8px">Ver chat</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <h3>Sin conversaciones</h3>
+        <p>Las conversaciones aparecerán cuando el bot empiece a funcionar</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

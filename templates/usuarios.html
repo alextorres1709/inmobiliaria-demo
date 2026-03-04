@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios{% endblock %}
+{% block header_title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Usuarios</h1>
+        <p class="page-subtitle">Gestiona los accesos al panel</p>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">+ Nuevo Usuario</button>
+</div>
+
+<div class="card" style="margin-bottom:20px">
+    <form method="GET" style="display:flex;gap:10px;align-items:end">
+        <div class="form-group" style="flex:1;margin:0">
+            <input type="text" name="search" class="form-input" placeholder="Buscar por nombre o email..." value="{{ search }}">
+        </div>
+        <select name="role" class="form-input" style="width:auto">
+            <option value="">Todos los roles</option>
+            {% for r in roles %}<option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r|capitalize }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+</div>
+
+<div class="card">
+    {% if users %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><strong>{{ u.name or '—' }}</strong></td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge badge-platform">{{ u.role|capitalize }}</span></td>
+                    <td>{% if u.active %}<span class="badge badge-success">Activo</span>{% else %}<span class="badge badge-danger">Inactivo</span>{% endif %}</td>
+                    <td>{{ u.created_at.strftime('%d/%m/%Y') if u.created_at else '—' }}</td>
+                    <td>
+                        <div style="display:flex;gap:4px">
+                            <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px" onclick="editUser({{ u.to_dict()|tojson }})">Editar</button>
+                            {% if u.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('users.toggle', user_id=u.id) }}">
+                                <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px">{{ 'Desact.' if u.active else 'Activar' }}</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><h3>Sin usuarios</h3></div>
+    {% endif %}
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header"><h3>Nuevo Usuario</h3><button class="modal-close" onclick="document.getElementById('createModal').style.display='none'">&times;</button></div>
+        <form method="POST" action="{{ url_for('users.create') }}">
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Nombre</label><input type="text" name="name" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Contraseña *</label><input type="password" name="password" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Rol</label><select name="role" class="form-input">{% for r in roles %}<option value="{{ r }}">{{ r|capitalize }}</option>{% endfor %}</select></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="document.getElementById('createModal').style.display='none'">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header"><h3>Editar Usuario</h3><button class="modal-close" onclick="document.getElementById('editModal').style.display='none'">&times;</button></div>
+        <form method="POST" id="editForm">
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Nombre</label><input type="text" name="name" id="edit_name" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" id="edit_email" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Nueva contraseña (dejar vacío para no cambiar)</label><input type="password" name="password" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Rol</label><select name="role" id="edit_role" class="form-input">{% for r in roles %}<option value="{{ r }}">{{ r|capitalize }}</option>{% endfor %}</select></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editUser(u) {
+    document.getElementById('editForm').action = '/usuarios/' + u.id + '/update';
+    document.getElementById('edit_name').value = u.name || '';
+    document.getElementById('edit_email').value = u.email || '';
+    document.getElementById('edit_role').value = u.role || 'viewer';
+    document.getElementById('editModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

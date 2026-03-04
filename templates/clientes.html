@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes{% endblock %}
+{% block header_title %}Clientes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Clientes</h1>
+        <p class="page-subtitle">Gestiona tu cartera de clientes</p>
+    </div>
+    {% if current_user and current_user.can_manage_properties %}
+    <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">
+        + Nuevo Cliente
+    </button>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="flex:1;min-width:200px;margin:0">
+            <input type="text" name="search" class="form-input" placeholder="Buscar por nombre, email o teléfono..."
+                value="{{ search }}">
+        </div>
+        <select name="source" class="form-input" style="width:auto">
+            <option value="">Todas las fuentes</option>
+            {% for s in sources %}
+            <option value="{{ s }}" {% if selected_source==s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+</div>
+
+<!-- Clients Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{{ clients|length }} clientes</h3>
+    </div>
+    {% if clients %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Fuente</th>
+                    <th>Notas</th>
+                    <th>Registrado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients %}
+                <tr>
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.phone or '—' }}</td>
+                    <td>{{ c.email or '—' }}</td>
+                    <td><span class="badge badge-platform">{{ c.source }}</span></td>
+                    <td>{{ c.notes[:30] if c.notes else '—' }}{% if c.notes and c.notes|length > 30 %}...{% endif %}
+                    </td>
+                    <td>{{ c.created_at.strftime('%d/%m/%Y') if c.created_at else '—' }}</td>
+                    <td>
+                        {% if current_user and current_user.can_manage_properties %}
+                        <div style="display:flex;gap:4px">
+                            <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px"
+                                onclick='editClient({{ c.to_dict()|tojson }})'>Editar</button>
+                            <form method="POST" action="{{ url_for('clients.delete', client_id=c.id) }}"
+                                onsubmit="return confirm('¿Eliminar este cliente?')">
+                                <button class="btn btn-secondary"
+                                    style="font-size:11px;padding:4px 8px;color:var(--danger)">Eliminar</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
+        <h3>Sin clientes</h3>
+        <p>Añade tu primer cliente para empezar</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Nuevo Cliente</h3>
+            <button class="modal-close"
+                onclick="document.getElementById('createModal').style.display='none'">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('clients.create') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" name="name" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" name="phone" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fuente</label>
+                    <select name="source" class="form-input">
+                        {% for s in sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea name="notes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                    onclick="document.getElementById('createModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Cliente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar Cliente</h3>
+            <button class="modal-close"
+                onclick="document.getElementById('editModal').style.display='none'">&times;</button>
+        </div>
+        <form method="POST" id="editForm">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" name="name" id="edit_name" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" name="phone" id="edit_phone" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" id="edit_email" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fuente</label>
+                    <select name="source" id="edit_source" class="form-input">
+                        {% for s in sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea name="notes" id="edit_notes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                    onclick="document.getElementById('editModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function editClient(c) {
+        document.getElementById('editForm').action = '/clientes/' + c.id + '/update';
+        document.getElementById('edit_name').value = c.name || '';
+        document.getElementById('edit_phone').value = c.phone || '';
+        document.getElementById('edit_email').value = c.email || '';
+        document.getElementById('edit_source').value = c.source || 'Web';
+        document.getElementById('edit_notes').value = c.notes || '';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+</script>
+{% endblock %}

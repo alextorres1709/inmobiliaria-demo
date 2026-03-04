@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Actividad{% endblock %}
+{% block header_title %}Actividad{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Log de Actividad</h1>
+        <p class="page-subtitle">Registro de todas las acciones realizadas en el panel</p>
+    </div>
+</div>
+
+<div class="card">
+    {% if logs %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Tipo</th><th>Detalle</th></tr></thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.created_at.strftime('%d/%m/%Y %H:%M') if log.created_at else '—' }}</td>
+                    <td>{{ log.user.email if log.user else 'Sistema' }}</td>
+                    <td><span class="badge badge-platform">{{ log.action }}</span></td>
+                    <td>{{ log.target_type }}</td>
+                    <td>{{ log.details[:60] }}{% if log.details|length > 60 %}...{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div style="display:flex;justify-content:center;gap:8px;padding:16px">
+        {% if page > 1 %}<a href="?page={{ page - 1 }}" class="btn btn-secondary">Anterior</a>{% endif %}
+        <span style="padding:8px 12px;color:var(--text-secondary)">Página {{ page }} de {{ total_pages }}</span>
+        {% if page < total_pages %}<a href="?page={{ page + 1 }}" class="btn btn-secondary">Siguiente</a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <h3>Sin actividad registrada</h3>
+        <p>Las acciones del panel se registrarán aquí</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

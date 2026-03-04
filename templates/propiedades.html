@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Propiedades{% endblock %}
+{% block header_title %}Propiedades{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Propiedades</h1>
+        <p class="page-subtitle">Gestiona el catálogo de inmuebles</p>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a href="{{ url_for('properties.export_csv') }}" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+        </a>
+        {% if current_user and current_user.can_manage_properties %}
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">
+            + Nueva Propiedad
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <div class="form-group" style="flex:1;min-width:200px;margin:0">
+            <input type="text" name="search" class="form-input" placeholder="Buscar por título, dirección, ciudad..." value="{{ search }}">
+        </div>
+        <select name="listing_type" class="form-input" style="width:auto">
+            <option value="">Todas las operaciones</option>
+            {% for lt in listing_types %}
+            <option value="{{ lt }}" {% if selected_listing == lt %}selected{% endif %}>{{ lt }}</option>
+            {% endfor %}
+        </select>
+        <select name="property_type" class="form-input" style="width:auto">
+            <option value="">Todos los tipos</option>
+            {% for pt in property_types %}
+            <option value="{{ pt }}" {% if selected_type == pt %}selected{% endif %}>{{ pt }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="form-input" style="width:auto">
+            <option value="">Todos</option>
+            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Activas</option>
+            <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactivas</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+</div>
+
+<!-- Properties Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{{ properties|length }} propiedades</h3>
+    </div>
+    {% if properties %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Operación</th>
+                    <th>Precio</th>
+                    <th>Ciudad</th>
+                    <th>Hab.</th>
+                    <th>m²</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in properties %}
+                <tr>
+                    <td><strong>{{ p.title }}</strong></td>
+                    <td>{{ p.property_type }}</td>
+                    <td>
+                        {% if p.listing_type == 'Venta' %}
+                        <span class="badge badge-info">Venta</span>
+                        {% else %}
+                        <span class="badge badge-warning">Alquiler</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.price_formatted }} €</td>
+                    <td>{{ p.city or '—' }}</td>
+                    <td>{{ p.bedrooms }}</td>
+                    <td>{{ p.sqm }}</td>
+                    <td>
+                        {% if p.active %}
+                        <span class="badge badge-success">Activa</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if current_user and current_user.can_manage_properties %}
+                        <div style="display:flex;gap:4px">
+                            <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px" onclick="editProperty({{ p.to_dict()|tojson }})">Editar</button>
+                            <form method="POST" action="{{ url_for('properties.toggle', prop_id=p.id) }}">
+                                <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px">{{ 'Desact.' if p.active else 'Activar' }}</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <h3>Sin propiedades</h3>
+        <p>Añade tu primera propiedad para empezar</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Nueva Propiedad</h3>
+            <button class="modal-close" onclick="document.getElementById('createModal').style.display='none'">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('properties.create') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Título *</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Operación</label>
+                        <select name="listing_type" class="form-input">
+                            {% for lt in listing_types %}
+                            <option value="{{ lt }}">{{ lt }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo</label>
+                        <select name="property_type" class="form-input">
+                            {% for pt in property_types %}
+                            <option value="{{ pt }}">{{ pt }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Precio (€)</label>
+                        <input type="number" name="price" class="form-input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">m²</label>
+                        <input type="number" name="sqm" class="form-input">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Habitaciones</label>
+                        <input type="number" name="bedrooms" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Baños</label>
+                        <input type="number" name="bathrooms" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" name="address" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" name="city" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="description" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Características (separadas por coma)</label>
+                    <input type="text" name="features" class="form-input" placeholder="Ascensor, Terraza, Garaje...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL Imagen</label>
+                    <input type="url" name="image_url" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono de contacto</label>
+                    <input type="text" name="contact_phone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><input type="checkbox" name="active" checked> Activa</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('createModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Propiedad</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar Propiedad</h3>
+            <button class="modal-close" onclick="document.getElementById('editModal').style.display='none'">&times;</button>
+        </div>
+        <form method="POST" id="editForm">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Título *</label>
+                    <input type="text" name="title" id="edit_title" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Operación</label>
+                        <select name="listing_type" id="edit_listing_type" class="form-input">
+                            {% for lt in listing_types %}<option value="{{ lt }}">{{ lt }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo</label>
+                        <select name="property_type" id="edit_property_type" class="form-input">
+                            {% for pt in property_types %}<option value="{{ pt }}">{{ pt }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Precio (€)</label>
+                        <input type="number" name="price" id="edit_price" class="form-input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">m²</label>
+                        <input type="number" name="sqm" id="edit_sqm" class="form-input">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Habitaciones</label>
+                        <input type="number" name="bedrooms" id="edit_bedrooms" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Baños</label>
+                        <input type="number" name="bathrooms" id="edit_bathrooms" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" name="address" id="edit_address" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" name="city" id="edit_city" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="description" id="edit_description" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Características</label>
+                    <input type="text" name="features" id="edit_features" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL Imagen</label>
+                    <input type="url" name="image_url" id="edit_image_url" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono de contacto</label>
+                    <input type="text" name="contact_phone" id="edit_contact_phone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><input type="checkbox" name="active" id="edit_active"> Activa</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editProperty(p) {
+    document.getElementById('editForm').action = '/propiedades/' + p.id + '/update';
+    document.getElementById('edit_title').value = p.title || '';
+    document.getElementById('edit_listing_type').value = p.listing_type || 'Venta';
+    document.getElementById('edit_property_type').value = p.property_type || 'Piso';
+    document.getElementById('edit_price').value = p.price || 0;
+    document.getElementById('edit_sqm').value = p.sqm || 0;
+    document.getElementById('edit_bedrooms').value = p.bedrooms || 0;
+    document.getElementById('edit_bathrooms').value = p.bathrooms || 0;
+    document.getElementById('edit_address').value = p.address || '';
+    document.getElementById('edit_city').value = p.city || '';
+    document.getElementById('edit_description').value = p.description || '';
+    document.getElementById('edit_features').value = p.features || '';
+    document.getElementById('edit_image_url').value = p.image_url || '';
+    document.getElementById('edit_contact_phone').value = p.contact_phone || '';
+    document.getElementById('edit_active').checked = p.active;
+    document.getElementById('editModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

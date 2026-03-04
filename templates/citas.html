@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Citas{% endblock %}
+{% block header_title %}Citas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Agenda de Citas</h1>
+        <p class="page-subtitle">Gestiona las visitas y reuniones con clientes</p>
+    </div>
+    {% if current_user and current_user.can_manage_properties %}
+    <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">
+        + Nueva Cita
+    </button>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <select name="status" class="form-input" style="width:auto">
+            <option value="">Todos los estados</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pendiente</option>
+            <option value="confirmed" {% if selected_status == 'confirmed' %}selected{% endif %}>Confirmada</option>
+            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completada</option>
+            <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelada</option>
+        </select>
+        <input type="date" name="date" class="form-input" style="width:auto" value="{{ selected_date }}">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        {% if selected_status or selected_date %}
+        <a href="{{ url_for('appointments.index') }}" class="btn btn-secondary">Limpiar</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Appointments Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{{ appointments|length }} citas</h3>
+    </div>
+    {% if appointments %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Propiedad</th>
+                    <th>Fecha y Hora</th>
+                    <th>Duración</th>
+                    <th>Estado</th>
+                    <th>Notas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td><strong>{{ appt.client.name if appt.client else '—' }}</strong></td>
+                    <td>{{ appt.property.title[:25] if appt.property else '—' }}{% if appt.property and appt.property.title|length > 25 %}...{% endif %}</td>
+                    <td>{{ appt.date.strftime('%d/%m/%Y %H:%M') if appt.date else '—' }}</td>
+                    <td>{{ appt.duration }} min</td>
+                    <td>
+                        {% if appt.status == 'pending' %}
+                        <span class="badge badge-warning">Pendiente</span>
+                        {% elif appt.status == 'confirmed' %}
+                        <span class="badge badge-success">Confirmada</span>
+                        {% elif appt.status == 'completed' %}
+                        <span class="badge badge-info">Completada</span>
+                        {% else %}
+                        <span class="badge badge-danger">Cancelada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ appt.notes[:30] if appt.notes else '—' }}{% if appt.notes and appt.notes|length > 30 %}...{% endif %}</td>
+                    <td>
+                        {% if current_user and current_user.can_manage_properties %}
+                        <div style="display:flex;gap:4px;flex-wrap:wrap">
+                            {% if appt.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('appointments.change_status', appt_id=appt.id, status='confirmed') }}">
+                                <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px">Confirmar</button>
+                            </form>
+                            {% endif %}
+                            {% if appt.status in ['pending', 'confirmed'] %}
+                            <form method="POST" action="{{ url_for('appointments.change_status', appt_id=appt.id, status='completed') }}">
+                                <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px">Completar</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('appointments.change_status', appt_id=appt.id, status='cancelled') }}">
+                                <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px">Cancelar</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>
+        <h3>Sin citas</h3>
+        <p>Crea una nueva cita para empezar a organizar tu agenda</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Nueva Cita</h3>
+            <button class="modal-close" onclick="document.getElementById('createModal').style.display='none'">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('appointments.create') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Cliente *</label>
+                    <select name="client_id" class="form-input" required>
+                        <option value="">Seleccionar cliente</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Propiedad</label>
+                    <select name="property_id" class="form-input">
+                        <option value="">Sin propiedad</option>
+                        {% for p in properties %}
+                        <option value="{{ p.id }}">{{ p.title }} — {{ p.price_formatted }} €</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Fecha y hora *</label>
+                        <input type="datetime-local" name="date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duración (min)</label>
+                        <input type="number" name="duration" class="form-input" value="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select name="status" class="form-input">
+                        <option value="pending">Pendiente</option>
+                        <option value="confirmed">Confirmada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea name="notes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('createModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Cita</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
