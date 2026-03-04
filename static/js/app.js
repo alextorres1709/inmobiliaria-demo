@@ -11,19 +11,19 @@ function toggleTheme() {
 function getChartTheme() {
     var d = isDark();
     return {
-        primary: d ? '#818cf8' : '#4F46E5',
-        primaryA: function (a) { return d ? 'rgba(129,140,248,' + a + ')' : 'rgba(79,70,229,' + a + ')'; },
-        secondary: d ? '#22d3ee' : '#14b8a6',
-        secondaryA: function (a) { return d ? 'rgba(34,211,238,' + a + ')' : 'rgba(20,184,166,' + a + ')'; },
-        indigoA: function (a) { return d ? 'rgba(167,139,250,' + a + ')' : 'rgba(99,102,241,' + a + ')'; },
+        primary: d ? '#818cf8' : '#1a3a5c',
+        primaryA: function (a) { return d ? 'rgba(129,140,248,' + a + ')' : 'rgba(26,58,92,' + a + ')'; },
+        secondary: d ? '#22d3ee' : '#1b6b8a',
+        secondaryA: function (a) { return d ? 'rgba(34,211,238,' + a + ')' : 'rgba(27,107,138,' + a + ')'; },
+        indigoA: function (a) { return d ? 'rgba(167,139,250,' + a + ')' : 'rgba(36,89,128,' + a + ')'; },
         amberA: function (a) { return 'rgba(245,158,11,' + a + ')'; },
         text: d ? '#a0aec0' : '#94a3b8',
         grid: d ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-        tip: { bg: d ? '#1a1a28' : '#fafbfc', title: d ? '#e2e8f0' : '#0f172a', body: d ? '#a0aec0' : '#334155', border: d ? '#2a2a3e' : '#e0e4ea' },
-        card: d ? '#0f0f18' : '#fafbfc',
+        tip: { bg: d ? '#1a1a28' : '#f8fafb', title: d ? '#e2e8f0' : '#0f172a', body: d ? '#a0aec0' : '#334155', border: d ? '#2a2a3e' : '#d0d8e0' },
+        card: d ? '#0f0f18' : '#f8fafb',
         palette: d
             ? ['#818cf8', '#22d3ee', '#f59e0b', '#ef4444', '#a78bfa', '#ec4899', '#34d399', '#64748b']
-            : ['#4F46E5', '#14b8a6', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#8b5cf6', '#64748b']
+            : ['#1a3a5c', '#245980', '#1b6b8a', '#2a7da8', '#3a8ab5', '#1b7a6e', '#c75a3a', '#5a7d95']
     };
 }
 
