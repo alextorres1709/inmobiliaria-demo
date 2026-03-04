@@ -179,22 +179,24 @@
 
 {% block scripts %}
 <script>
-    // Ocean blue color palette
-    var PRO = {
-        blue: '#1a3a5c',
-        indigo: '#245980',
-        teal: '#1b6b8a',
-        amber: '#2a7da8',
-        rose: '#c75a3a',
-        slate: '#5a7d95',
-        sky: '#3a8ab5',
-        violet: '#1e4d6e',
-        emerald: '#1b7a6e',
-        coral: '#d4805a',
-    };
+    // Theme-adaptive chart colors
+    function getPRO() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return dark ? {
+            blue: '#818cf8', indigo: '#a78bfa', teal: '#5eead4', amber: '#fbbf24',
+            rose: '#fb7185', slate: '#94a3b8', sky: '#7dd3fc', violet: '#c4b5fd',
+            emerald: '#6ee7b7', coral: '#fca5a1',
+        } : {
+            blue: '#1a3a5c', indigo: '#245980', teal: '#1b6b8a', amber: '#2a7da8',
+            rose: '#c75a3a', slate: '#5a7d95', sky: '#3a8ab5', violet: '#1e4d6e',
+            emerald: '#1b7a6e', coral: '#d4805a',
+        };
+    }
+    var PRO = getPRO();
 
     var _dCharts = [];
     function buildDashboardCharts() {
+        PRO = getPRO();
         _dCharts.forEach(function (c) { c.destroy(); });
         _dCharts = [];
         var t = getChartTheme();
