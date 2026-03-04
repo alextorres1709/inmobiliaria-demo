@@ -60,8 +60,8 @@
     </div>
 </div>
 
-<!-- Charts Row 1: Appointment doughnut (small) + Client sources (horizontal bar) -->
-<div class="grid-3">
+<!-- Charts Row 1: Client sources (horizontal bar) + Appointment status (doughnut) -->
+<div class="grid-2">
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">
@@ -85,9 +85,8 @@
                 Estado de Citas
             </h3>
         </div>
-        <div
-            style="display:flex;align-items:center;justify-content:center;padding:10px 20px;max-width:200px;margin:0 auto">
-            <canvas id="appointmentChart" height="180"></canvas>
+        <div style="display:flex;align-items:center;justify-content:center;padding:20px">
+            <canvas id="appointmentChart" style="max-width:240px;max-height:240px"></canvas>
         </div>
     </div>
 </div>
@@ -115,9 +114,8 @@
                 Tipos de Inmueble
             </h3>
         </div>
-        <div
-            style="display:flex;align-items:center;justify-content:center;padding:10px 20px;max-width:280px;margin:0 auto">
-            <canvas id="typesChart" height="200"></canvas>
+        <div style="display:flex;align-items:center;justify-content:center;padding:20px">
+            <canvas id="typesChart" style="max-width:260px;max-height:260px"></canvas>
         </div>
     </div>
 </div>
@@ -139,23 +137,23 @@
                 <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">Total Promociones</div>
             </div>
             <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;text-align:center">
-                <div style="font-size:28px;font-weight:800;color:#34d399">{{ active_properties }}</div>
+                <div style="font-size:28px;font-weight:800;color:#5cb88a">{{ active_properties }}</div>
                 <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">Activas</div>
             </div>
             <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;text-align:center">
-                <div style="font-size:28px;font-weight:800;color:#f59e0b">{{
+                <div style="font-size:28px;font-weight:800;color:#e5a54b">{{
                     "{:,.0f}".format(avg_price_sale).replace(",", ".") }}€</div>
                 <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">Precio Medio Venta</div>
             </div>
             <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;text-align:center">
-                <div style="font-size:28px;font-weight:800;color:#ec4899">{{ total_properties - active_properties }}
+                <div style="font-size:28px;font-weight:800;color:#e06a7a">{{ total_properties - active_properties }}
                 </div>
                 <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">Entregadas</div>
             </div>
         </div>
     </div>
 
-    <!-- Análisis de Consultas: NOW a proper bar chart -->
+    <!-- Análisis de Consultas: bar chart from API -->
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">
@@ -175,27 +173,45 @@
 
 {% block scripts %}
 <script>
+    // Professional color palette
+    var PRO = {
+        blue: '#5b8def',
+        indigo: '#7c6cf0',
+        teal: '#50bfa5',
+        amber: '#e5a54b',
+        rose: '#e06a7a',
+        slate: '#8494a7',
+        sky: '#56a5d8',
+        violet: '#9b7ed8',
+        emerald: '#5cb88a',
+        coral: '#d4805a',
+    };
+
     var _sCharts = [];
     function buildStatsCharts() {
         _sCharts.forEach(function (c) { c.destroy(); });
         _sCharts = [];
         var t = getChartTheme();
-
         Chart.defaults.color = t.text;
         Chart.defaults.borderColor = t.grid;
 
-        // ── Appointment Status (small doughnut) ──
+        // ── Appointment Status (doughnut) ──
         var apptData = {{ appointment_statuses| tojson
     }};
     var apptLabels = [];
     var apptValues = [];
-    var statusTranslations = { 'confirmed': 'Confirmadas', 'pending': 'Pendientes', 'completed': 'Completadas', 'cancelled': 'Canceladas' };
-    var statusColors = ['#22d3ee', '#f59e0b', '#34d399', '#ef4444'];
-    var statusOrder = ['confirmed', 'pending', 'completed', 'cancelled'];
-    statusOrder.forEach(function (s) {
+    var statusMap = {
+        'confirmed': { label: 'Confirmadas', color: PRO.blue },
+        'pending': { label: 'Pendientes', color: PRO.amber },
+        'completed': { label: 'Completadas', color: PRO.teal },
+        'cancelled': { label: 'Canceladas', color: PRO.rose }
+    };
+    var apptColors = [];
+    ['confirmed', 'pending', 'completed', 'cancelled'].forEach(function (s) {
         if (apptData[s]) {
-            apptLabels.push(statusTranslations[s] || s);
+            apptLabels.push(statusMap[s].label);
             apptValues.push(apptData[s]);
+            apptColors.push(statusMap[s].color);
         }
     });
 
@@ -205,7 +221,7 @@
             labels: apptLabels,
             datasets: [{
                 data: apptValues,
-                backgroundColor: statusColors.slice(0, apptValues.length),
+                backgroundColor: apptColors,
                 borderWidth: 0,
                 hoverOffset: 6,
             }]
@@ -213,19 +229,18 @@
         options: {
             responsive: true,
             cutout: '62%',
-            animation: { animateRotate: true, duration: 1000 },
+            animation: { animateRotate: true, duration: 900 },
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, pointStyle: 'circle', color: t.text, font: { size: 11 } } },
+                legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyle: 'circle', color: t.text, font: { size: 12 } } },
                 tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
             }
         }
     }));
 
-    // ── Client Sources (horizontal bar chart) ──
+    // ── Client Sources (horizontal bar) ──
     var srcData = {{ client_sources| tojson }};
     var srcLabels = Object.keys(srcData);
     var srcValues = Object.values(srcData);
-    var srcColors = ['#818cf8', '#22d3ee', '#f59e0b', '#34d399', '#ec4899', '#a78bfa', '#64748b'];
 
     _sCharts.push(new Chart(document.getElementById('sourcesChart'), {
         type: 'bar',
@@ -234,8 +249,8 @@
             datasets: [{
                 label: 'Clientes',
                 data: srcValues,
-                backgroundColor: srcColors.slice(0, srcValues.length),
-                borderRadius: 6,
+                backgroundColor: PRO.indigo,
+                borderRadius: 5,
                 borderSkipped: false,
                 barThickness: 22,
             }]
@@ -243,23 +258,22 @@
         options: {
             indexAxis: 'y',
             responsive: true,
-            animation: { duration: 1000, easing: 'easeOutQuart' },
+            animation: { duration: 800, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
                 tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
             },
             scales: {
                 x: { beginAtZero: true, grid: { color: t.grid }, ticks: { color: t.text, stepSize: 1 } },
-                y: { grid: { display: false }, ticks: { color: t.text, font: { size: 12, weight: '600' } } }
+                y: { grid: { display: false }, ticks: { color: t.text, font: { size: 12 } } }
             }
         }
     }));
 
-    // ── Property Cities (vertical bar chart) ──
+    // ── Property Cities (vertical bar) ──
     var cityData = {{ property_cities| tojson }};
     var cityLabels = Object.keys(cityData);
     var cityValues = Object.values(cityData);
-    var cityColors = ['#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#a78bfa', '#ec4899', '#34d399', '#64748b'];
 
     _sCharts.push(new Chart(document.getElementById('citiesChart'), {
         type: 'bar',
@@ -268,15 +282,15 @@
             datasets: [{
                 label: 'Promociones',
                 data: cityValues,
-                backgroundColor: cityColors.slice(0, cityValues.length),
-                borderRadius: 6,
+                backgroundColor: PRO.teal,
+                borderRadius: 5,
                 borderSkipped: false,
                 maxBarThickness: 40,
             }]
         },
         options: {
             responsive: true,
-            animation: { duration: 1000, easing: 'easeOutQuart' },
+            animation: { duration: 800, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
                 tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
@@ -288,11 +302,11 @@
         }
     }));
 
-    // ── Property Types (polar area chart) ──
+    // ── Property Types (polar area) ──
     var typeData = {{ property_types| tojson }};
     var typeLabels = Object.keys(typeData);
     var typeValues = Object.values(typeData);
-    var typeColors = ['#818cf8', '#34d399', '#f59e0b', '#ec4899', '#22d3ee'];
+    var typePalette = [PRO.indigo, PRO.teal, PRO.amber, PRO.rose, PRO.sky];
 
     _sCharts.push(new Chart(document.getElementById('typesChart'), {
         type: 'polarArea',
@@ -300,16 +314,16 @@
             labels: typeLabels,
             datasets: [{
                 data: typeValues,
-                backgroundColor: typeColors.slice(0, typeValues.length).map(function (c) { return c + 'cc'; }),
-                borderColor: typeColors.slice(0, typeValues.length),
+                backgroundColor: typePalette.slice(0, typeValues.length).map(function (c) { return c + 'bb'; }),
+                borderColor: typePalette.slice(0, typeValues.length),
                 borderWidth: 2,
             }]
         },
         options: {
             responsive: true,
-            animation: { animateRotate: true, duration: 1000 },
+            animation: { animateRotate: true, duration: 900 },
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', color: t.text, font: { size: 11 } } },
+                legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', color: t.text, font: { size: 12 } } },
                 tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
             },
             scales: {
@@ -327,14 +341,13 @@
             }
         }, 50);
 
-        // ── Análisis de Consultas (horizontal bar chart from API) ──
+        // ── Análisis de Consultas (horizontal bar from API) ──
         fetch('/api/stats/insights').then(function (r) { return r.json(); }).then(function (data) {
             if (!data.labels || data.labels.length === 0) {
                 document.getElementById('insightsChart').parentElement.innerHTML = '<p style="color:var(--text-tertiary);padding:20px">No hay datos suficientes</p>';
                 return;
             }
             var t = getChartTheme();
-            var insightColors = ['#818cf8', '#22d3ee', '#f59e0b', '#34d399', '#ec4899', '#a78bfa', '#6366f1', '#ef4444', '#14b8a6', '#64748b'];
             _sCharts.push(new Chart(document.getElementById('insightsChart'), {
                 type: 'bar',
                 data: {
@@ -342,23 +355,23 @@
                     datasets: [{
                         label: 'Menciones',
                         data: data.values,
-                        backgroundColor: insightColors.slice(0, data.values.length),
-                        borderRadius: 6,
+                        backgroundColor: PRO.sky,
+                        borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 18,
+                        barThickness: 16,
                     }]
                 },
                 options: {
                     indexAxis: 'y',
                     responsive: true,
-                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    animation: { duration: 700, easing: 'easeOutQuart' },
                     plugins: {
                         legend: { display: false },
                         tooltip: { backgroundColor: t.tip.bg, titleColor: t.tip.title, bodyColor: t.tip.body, borderColor: t.tip.border, borderWidth: 1 }
                     },
                     scales: {
                         x: { beginAtZero: true, grid: { color: t.grid }, ticks: { color: t.text, stepSize: 1 } },
-                        y: { grid: { display: false }, ticks: { color: t.text, font: { size: 11, weight: '600' } } }
+                        y: { grid: { display: false }, ticks: { color: t.text, font: { size: 11 } } }
                     }
                 }
             }));
